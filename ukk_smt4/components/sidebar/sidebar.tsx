@@ -53,6 +53,7 @@
     }
 
   ]
+  
   export function AppSidebar() {
     return (
       <Sidebar className="bg-red-800 text-zinc-100 border-r border-zinc-800/80">

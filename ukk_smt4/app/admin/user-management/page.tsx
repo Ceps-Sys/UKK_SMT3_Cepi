@@ -130,7 +130,7 @@ export default function UserManagementPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>ID</TableHead>
+                            <TableHead>No</TableHead>
                             <TableHead>Nama lengkap</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Role</TableHead>
@@ -144,9 +144,9 @@ export default function UserManagementPage() {
                             <TableRow><TableCell colSpan={7} className="text-center">Memuat user...</TableCell></TableRow>
                         ) : users.length === 0 ? (
                             <TableRow><TableCell colSpan={7} className="text-center">Belum ada user.</TableCell></TableRow>
-                        ) : users.map((user) => (
+                        ) : users.map((user, index) => (
                             <TableRow key={user.id}>
-                                <TableCell>{user.id}</TableCell>
+                                <TableCell>{(currentPage - 1) * PAGE_SIZE + index + 1}</TableCell>
                                 <TableCell className="font-medium">{user.fullname}</TableCell>
                                 <TableCell>{user.email}</TableCell>
                                 <TableCell className="capitalize">{user.role}</TableCell>

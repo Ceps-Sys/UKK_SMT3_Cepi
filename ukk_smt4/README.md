@@ -1,36 +1,553 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UKK SMT 4 — Dokumentasi Arsitektur, Perbandingan Versi & Panduan Perintah Lengkap
 
-## Getting Started
+Repositori ini merupakan aplikasi web modern berbasis **Next.js (App Router)**, **TypeScript**, **Prisma ORM**, **MySQL**, dan **Tailwind CSS / Shadcn UI**.  
+Dokumen ini disusun sebagai panduan teknis lengkap mencakup arsitektur proyek, perbandingan antara ekosistem versi lama (**Next.js 12 / Prisma lama**) dengan **versi terbaru**, serta seluruh daftar perintah terminal (CMD/Bash) yang digunakan dalam pengembangan.
 
-First, run the development server:
+---
 
-```bash
+## Daftar Isi
+1. [Arsitektur & Perbandingan: Next.js Terbaru vs Next.js 12](#1-arsitektur--perbandingan-nextjs-terbaru-vs-nextjs-12)
+2. [Perbandingan & Bedah Lengkap Prisma ORM (Lama vs Terbaru)](#2-perbandingan--bedah-lengkap-prisma-orm-lama-vs-terbaru)
+3. [Struktur Direktori Proyek](#3-struktur-direktori-proyek)
+4. [Perintah Next.js & NPM Lengkap](#4-perintah-nextjs--npm-lengkap)
+5. [Perintah Prisma ORM & Database MySQL Lengkap](#5-perintah-prisma-orm--database-mysql-lengkap)
+6. [Perintah Shadcn UI & Tailwind CSS](#6-perintah-shadcn-ui--tailwind-css)
+7. [Perintah MySQL & Docker (Port 3307)](#7-perintah-mysql--docker-port-3307)
+8. [Perintah Git & GitHub Lengkap (Version Control)](#8-perintah-git--github-lengkap-version-control)
+9. [Troubleshooting Error Umum (Catatan Teknis)](#9-troubleshooting-error-umum-catatan-teknis)
+
+---
+
+## 1. Arsitektur & Perbandingan: Next.js Terbaru vs Next.js 12
+
+Perbedaan paling mendasar antara **Next.js 12** (era Pages Router) dan **Next.js versi terbaru** (era App Router) terletak pada cara menangani routing, rendering server/client, dan pengambilan data.
+
+| Aspek Teknis | Proyek Ini (Next.js Terbaru / App Router) | Next.js 12 (Versi Lama / Pages Router) | Penjelasan & Keunggulan Versi Terbaru |
+| :--- | :--- | :--- | :--- |
+| **Direktori Routing** | `app/` — Berbasis folder. Halaman wajib bernama `page.tsx`. | `pages/` — Berbasis nama file (misal `pages/users.tsx` -> `/users`). | Lebih terstruktur; satu folder rute bisa menampung `page.tsx`, `layout.tsx`, `loading.tsx`, dan `error.tsx` sekaligus. |
+| **Komponen Default** | **React Server Components (RSC)** secara default. | **Client Components** secara default (dirender di server lalu di-hydrate penuh di browser). | Kode database/Prisma bisa ditulis langsung di komponen server tanpa bocor ke browser, ukuran JS client jauh lebih kecil. |
+| **Interaktivitas Browser** | Wajib menambahkan direktif `"use client"` di baris paling atas jika memakai `useState`, `useEffect`, atau `onClick`. | Tidak mengenal `"use client"`, semua hook React langsung jalan di semua file. | Memisahkan logika tampilan statis (server) dengan logika interaktif (client) secara tegas. |
+| **Data Fetching** | Cukup `async function Page()` + `await prisma.user.findMany()` langsung di komponen. | Wajib memakai `getServerSideProps`, `getStaticProps`, atau `fetch()` di dalam `useEffect`. | Menghilangkan *boilerplate code* dan *prop drilling* berlapis-lapis. |
+| **Backend API** | **Route Handlers (`app/api/.../route.ts`)** mengekspor fungsi `GET`, `POST`, `PUT`, `DELETE`. | **API Routes (`pages/api/...`)** memakai satu handler `export default function handler(req, res)`. | Menggunakan standar Web `Request` dan `Response` modern; lebih rapi karena setiap metode HTTP punya fungsinya sendiri. |
+| **Layouting** | **Nested Layouts (`layout.tsx`)** — Sidebar/Navbar tidak ikut me-render ulang saat pindah sub-halaman. | Harus membungkus `_app.tsx` atau memanggil komponen `<Layout>` manual di setiap halaman. | Navigasi antar halaman admin terasa instan seperti SPA (*Single Page Application*). |
+| **Compiler & Bundler** | **Turbopack / SWC terbaru** (berbasis bahasa Rust). | **Webpack 5 / SWC generasi awal**. | Proses `npm run dev` dan *Fast Refresh* saat simpan file jauh lebih cepat. |
+
+---
+
+## 2. Perbandingan & Bedah Lengkap Prisma ORM (Lama vs Terbaru)
+
+**Prisma** adalah ORM (*Object-Relational Mapping*) modern untuk Node.js dan TypeScript yang menjembatani kode aplikasi dengan database MySQL secara *type-safe* (otomatis mendeteksi tipe kolom tabel).
+
+### A. Perbandingan Prisma Versi Lama (Era Next.js 12) vs Prisma Terbaru
+| Fitur / Konsep | Prisma Terbaru (v6 / v7 / v8+) | Prisma Lama (v3 / v4 — Era Next.js 12) | Keterangan |
+| :--- | :--- | :--- | :--- |
+| **Konfigurasi Koneksi** | Mendukung `prisma.config.ts` / driver adapters (seperti `@prisma/adapter-mariadb` / MySQL) serta pemisahan konfigurasi CLI dan runtime. | Semua URL koneksi dan generator hanya ditaruh di dalam `prisma/schema.prisma`. | Versi terbaru jauh lebih fleksibel untuk *edge runtime*, serverless, dan kontrol *connection pool*. |
+| **Generator Client** | Output client bisa dikustomisasi path-nya (misal `generated/prisma` atau `@prisma/client`) dengan validasi *contract* yang ketat. | Selalu menghasilkan file ke `node_modules/.prisma/client`. | Jika ada ketidaksesuaian versi CLI dan Client, versi terbaru langsung memunculkan error *contract* agar bug tidak lolos ke produksi. |
+| **Performa Query & Join** | Mendukung strategi `relationLoadStrategy: "join"` (melakukan `JOIN` langsung di level SQL). | Sering melakukan beberapa query terpisah di balik layar untuk relasi data. | Query relasi antar tabel di MySQL menjadi jauh lebih cepat dan hemat beban CPU database. |
+| **TypedSQL** | Mendukung penulisan query SQL mentah di file `.sql` yang otomatis diubah menjadi fungsi TypeScript *type-safe*. | Hanya memiliki `$queryRaw` yang tipe kembaliannya `unknown` / `any`. | Sangat membantu jika butuh query laporan kompleks tanpa kehilangan *autocomplete* TypeScript. |
+
+### B. Fungsi Utama Bagian-Bagian Prisma di Proyek Ini
+1. **`prisma/schema.prisma` (Blueprint Database):**
+   * `datasource db`: Menentukan jenis database (`mysql`) dan mengambil alamat koneksi dari `.env` (`env("DATABASE_URL")`).
+   * `generator client`: Menginstruksikan Prisma untuk membuat kode TypeScript (*Prisma Client*) berdasarkan model tabel.
+   * `model User { ... }`: Mendefinisikan struktur tabel, tipe data (`Int`, `String`, `DateTime`), *Primary Key* (`@id @default(autoincrement())`), nilai unik (`@unique`), serta pemetaan nama tabel asli (`@@map("users")`).
+2. **Prisma Client Singleton (`lib/prisma.ts`):**
+   * Berfungsi mencegah pembuatan koneksi MySQL berulang-ulang setiap kali Next.js melakukan *hot-reload* saat pengembangan (yang sering menyebabkan error `Too many connections`).
+3. **Operasi CRUD Utama di Backend (`app/api/.../route.ts`):**
+   * `prisma.user.findMany()` -> Mengambil semua data (`SELECT * FROM users`).
+   * `prisma.user.findUnique({ where: { id } })` -> Mencari 1 data spesifik berdasarkan ID/Email.
+   * `prisma.user.create({ data: { ... } })` -> Menambah baris data baru (`INSERT INTO`).
+   * `prisma.user.update({ where: { id }, data: { ... } })` -> Memperbarui data (`UPDATE`).
+   * `prisma.user.delete({ where: { id } })` -> Menghapus data (`DELETE`).
+   * `prisma.user.count()` -> Menghitung total baris data (`SELECT COUNT(*)`).
+
+---
+
+## 3. Struktur Direktori Proyek
+
+```text
+ukk_smt4/
+├── app/                        # [App Router] Seluruh halaman & endpoint API
+│   ├── api/                    # Backend API Route Handlers (GET, POST, PUT, DELETE)
+│   │   ├── auth/               # Endpoint autentikasi (login, logout, session)
+│   │   └── users/              # Endpoint CRUD manajemen user
+│   ├── admin/                  # Halaman dashboard & manajemen data
+│   ├── globals.css             # Konfigurasi CSS global & variabel tema Tailwind
+│   ├── layout.tsx              # Root layout utama aplikasi
+│   └── page.tsx                # Halaman beranda (/)
+├── components/                 # Komponen UI modular
+│   └── ui/                     # Komponen dasar dari Shadcn UI (Button, Input, Table, Dialog)
+├── lib/                        # Fungsi utilitas & konfigurasi library
+│   ├── prisma.ts               # Instance tunggal (Singleton) Prisma Client
+│   └── utils.ts                # Helper penggabungan class Tailwind (cn)
+├── prisma/                     # Konfigurasi & skema database ORM
+│   └── schema.prisma           # Definisi tabel, relasi, dan generator Prisma
+├── public/                     # Aset statis (gambar, ikon, logo) yang diakses via /nama-file
+├── .env                        # Variabel rahasia lokal (DATABASE_URL, JWT_SECRET) - JANGAN DI-PUSH
+├── .gitignore                  # Daftar file/folder yang diabaikan oleh Git
+├── next.config.ts              # Konfigurasi Next.js (image domains, redirects, dll.)
+├── package.json                # Daftar library/dependencies dan skrip perintah NPM
+└── tsconfig.json               # Konfigurasi compiler TypeScript & path alias (@/*)
+
+# ==============================================================================
+# INISIALISASI, INSTALASI & SERVER NEXT.JS
+# ==============================================================================
+
+# 1. Membuat proyek Next.js baru (versi terbaru dengan App Router, TypeScript, Tailwind)
+npx create-next-app@latest nama-proyek
+# [Perbandingan Next.js 12]: Dulu menggunakan `npx create-next-app@12 nama-proyek` (struktur folder pages/)
+
+# 2. Menginstall seluruh paket/library yang tercatat di package.json
+npm install
+
+# 3. Menginstall library tambahan (contoh: icon lucide-react, bcryptjs untuk hash password)
+npm install lucide-react bcryptjs
+npm install -D @types/bcryptjs
+
+# 4. Menjalankan server development lokal (default: http://localhost:3000)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+# 5. Menjalankan server development di port khusus (misal port 3001 jika 3000 dipakai)
+npx next dev -p 3001
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# 6. Mem-build aplikasi untuk produksi (mengecek error TypeScript, ESLint, dan optimasi bundle)
+npm run build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# 7. Menjalankan hasil build produksi secara lokal (wajib `npm run build` terlebih dahulu)
+npm run start
 
-## Learn More
+# 8. Mengecek standar penulisan kode menggunakan ESLint
+npm run lint
 
-To learn more about Next.js, take a look at the following resources:
+# 9. Membersihkan cache build Next.js jika terjadi error aneh pada routing/komponen
+# [Windows CMD]:
+rmdir /s /q .next
+# [Git Bash / Linux / Mac]:
+rm -rf .next
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# ==============================================================================
+# INISIALISASI & GENERATE CLIENT
+# ==============================================================================
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# 1. Inisialisasi Prisma pertama kali (membuat folder prisma/schema.prisma & template .env)
+npx prisma init
 
-## Deploy on Vercel
+# 2. Inisialisasi Prisma dengan provider database langsung diset ke MySQL
+npx prisma init --datasource-provider mysql
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# 3. Generate ulang Prisma Client (WAJIB dijalankan setiap selesai edit schema.prisma)
+# Mengompilasi model tabel menjadi fungsi TypeScript di dalam aplikasi
+npx prisma generate
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# ==============================================================================
+# SINKRONISASI SKEMA & MIGRASI DATABASE
+# ==============================================================================
+
+# 4. Mendorong perubahan schema.prisma langsung ke MySQL tanpa membuat file riwayat migrasi
+# Sangat cepat untuk tahap prototyping/development agar tabel langsung terbuat di MySQL
+npx prisma db push
+
+# 5. Mendorong skema dengan memaksa reset jika ada perubahan kolom yang berpotensi menghilangkan data
+npx prisma db push --force-reset
+
+# 6. Membuat migrasi resmi & menerapkannya ke database (menyimpan file SQL di prisma/migrations/)
+npx prisma migrate dev --name deskripsi_perubahan
+
+# 7. Mengecek status migrasi (apakah semua file migrasi sudah diterapkan ke database)
+npx prisma migrate status
+
+# 8. Menerapkan migrasi pada server produksi (tidak membuat migrasi baru, hanya mengeksekusi yang ada)
+npx prisma migrate deploy
+
+# 9. Mereset total seluruh database (MENGHAPUS SEMUA DATA) lalu menjalankan ulang semua migrasi
+npx prisma migrate reset
+
+# ==============================================================================
+# INTROSPECTION, SEEDING, STUDIO & VALIDASI
+# ==============================================================================
+
+# 10. Menarik struktur tabel dari MySQL yang sudah ada ke dalam schema.prisma (Introspection)
+# Berguna jika tabel dibuat manual melalui DBeaver / phpMyAdmin
+npx prisma db pull
+
+# 11. Membuka Prisma Studio (antarmuka web di http://localhost:5555 untuk lihat/tambah/edit data)
+npx prisma studio
+
+# 12. Menjalankan script seeding (mengisi data awal otomatis seperti akun admin default)
+npx prisma db seed
+
+# 13. Merapikan indentasi dan format penulisan file prisma/schema.prisma
+npx prisma format
+
+# 14. Memvalidasi apakah ada kesalahan syntax atau relasi pada file prisma/schema.prisma
+npx prisma validate
+
+# 15. Mengecek versi CLI Prisma dan versi Engine yang sedang terpasang
+npx prisma -v
+
+# ==============================================================================
+# KOMPONEN ANTARMUKA (SHADCN UI)
+# ==============================================================================
+
+# 1. Inisialisasi konfigurasi Shadcn UI (membuat components.json & lib/utils.ts)
+npx shadcn@latest init
+# [Perbandingan Versi Lama]: Dulu menggunakan `npx shadcn-ui@latest init`
+
+# 2. Menambahkan komponen UI spesifik ke folder components/ui/
+npx shadcn@latest add button input label table dialog card badge select alert
+
+# 3. Menginstall semua komponen Shadcn UI sekaligus
+npx shadcn@latest add --all
+
+# ==============================================================================
+# CEK KONEKSI & MANAJEMEN CONTAINER MYSQL (PORT 3307)
+# ==============================================================================
+
+# 1. Format standar variabel koneksi di dalam file .env:
+# DATABASE_URL="mysql://root:password_kamu@localhost:3307/nama_database"
+
+# 2. Mengecek container Docker MySQL yang sedang berjalan
+docker ps
+
+# 3. Menyalakan / menghentikan container MySQL jika memakai Docker
+docker start nama_container_mysql
+docker stop nama_container_mysql
+
+# 4. Masuk ke terminal CLI MySQL secara langsung melalui Docker
+docker exec -it nama_container_mysql mysql -u root -p
+
+# 5. Mengecek apakah port 3307 sudah aktif/listening di Windows CMD
+netstat -ano | findstr :3307
+
+# ==============================================================================
+# ALUR KERJA HARIAN (MENYIMPAN & MENGIRIM PERUBAHAN KE GITHUB)
+# ==============================================================================
+
+# 1. Mengecek status file (untracked / merah = baru, modified = diubah, staged / hijau = siap commit)
+git status
+
+# 2. Menambahkan seluruh perubahan file ke Staging Area
+# (File/folder di dalam .gitignore seperti .env, node_modules/, .next/ otomatis dilewati)
+git add .
+
+# 3. Menambahkan satu file atau folder tertentu saja ke Staging Area
+git add app/api/users/route.ts
+
+# 4. Menyimpan riwayat perubahan (snapshot) ke repositori lokal
+git commit -m "feat: melengkapi modul user management dan dokumentasi"
+
+# 5. Mengirim commit terbaru dari komputer lokal ke GitHub (branch main)
+git push origin main
+
+# 6. Mengambil & menggabungkan update terbaru dari GitHub ke komputer lokal
+git pull origin main
+
+# ==============================================================================
+# SETUP AWAL REPOSITORI & REMOTE GITHUB
+# ==============================================================================
+
+# 7. Menginisialisasi folder proyek menjadi repositori Git lokal
+git init
+
+# 8. Mengatur nama dan email identitas pembuat commit
+git config user.name "Cepi Handani"
+git config user.email "email_github_kamu@example.com"
+
+# 9. Menghubungkan repositori lokal ke URL repositori GitHub
+git remote add origin [https://github.com/Ceps-Sys/UKK_SMT4_Cepi.git](https://github.com/Ceps-Sys/UKK_SMT4_Cepi.git)
+
+# 10. Mengecek daftar URL remote yang terhubung
+git remote -v
+
+# 11. Mengubah URL remote jika salah ketik alamat repositori
+git remote set-url origin [https://github.com/Ceps-Sys/UKK_SMT4_Cepi.git](https://github.com/Ceps-Sys/UKK_SMT4_Cepi.git)
+
+# 12. Mengganti nama branch default menjadi main
+git branch -M main
+
+# 13. Push pertama kali sekaligus mengatur upstream (-u) agar selanjutnya cukup ketik `git push`
+git push -u origin main
+
+# ==============================================================================
+# INSPEKSI RIWAYAT, BRANCHING & PERBAIKAN KESALAHAN GIT
+# ==============================================================================
+
+# 14. Melihat riwayat commit secara ringkas dalam 1 baris per commit
+git log --oneline -n 10
+
+# 15. Melihat perbedaan baris kode yang diubah sebelum di-add/commit
+git diff
+
+# 16. Membatalkan file yang sudah terlanjur masuk `git add` (mengembalikan ke unstaged)
+git reset HEAD nama_file.tsx
+
+# 17. Menghapus file dari pelacakan Git TANPA menghapus file fisik di komputer
+# (Wajib dipakai jika file .env atau folder AI tools terlanjur ter-commit sebelum masuk .gitignore)
+git rm --cached .env
+git rm -r --cached .agents/ .claude/ .cursor/
+
+# 18. Membuat branch baru untuk eksperimen fitur tanpa mengganggu branch main
+git checkout -b fitur-baru
+
+
+
+# UKK SMT 4 — Dokumentasi Arsitektur, Panduan CRUD (Next.js Terbaru vs v12) & Perintah Lengkap
+
+Repositori ini merupakan aplikasi web modern berbasis **Next.js (App Router)**, **TypeScript**, **Prisma ORM**, **MySQL**, dan **Tailwind CSS / Shadcn UI**.  
+Dokumen ini disusun sebagai panduan teknis lengkap mencakup arsitektur proyek, perbandingan ekosistem **Next.js versi terbaru** dengan **Next.js 12**, panduan lengkap pembuatan **CRUD** pada kedua versi, serta daftar seluruh perintah terminal (CMD/Bash).
+
+---
+
+## Daftar Isi
+1. [Arsitektur & Perbandingan: Next.js Terbaru vs Next.js 12](#1-arsitektur--perbandingan-nextjs-terbaru-vs-nextjs-12)
+2. [Perbandingan & Bedah Lengkap Prisma ORM (Lama vs Terbaru)](#2-perbandingan--bedah-lengkap-prisma-orm-lama-vs-terbaru)
+3. [Panduan Lengkap Pembuatan CRUD: Next.js Terbaru vs Next.js 12](#3-panduan-lengkap-pembuatan-crud-nextjs-terbaru-vs-nextjs-12)
+4. [Struktur Direktori Proyek](#4-struktur-direktori-proyek)
+5. [Perintah Next.js & NPM Lengkap](#5-perintah-nextjs--npm-lengkap)
+6. [Perintah Prisma ORM & Database MySQL Lengkap](#6-perintah-prisma-orm--database-mysql-lengkap)
+7. [Perintah Shadcn UI & Tailwind CSS](#7-perintah-shadcn-ui--tailwind-css)
+8. [Perintah MySQL & Docker (Port 3307)](#8-perintah-mysql--docker-port-3307)
+9. [Perintah Git & GitHub Lengkap (Version Control)](#9-perintah-git--github-lengkap-version-control)
+10. [Troubleshooting Error Umum (Catatan Teknis)](#10-troubleshooting-error-umum-catatan-teknis)
+
+---
+
+## 1. Arsitektur & Perbandingan: Next.js Terbaru vs Next.js 12
+
+Perbedaan paling mendasar antara **Next.js 12** (era Pages Router) dan **Next.js versi terbaru** (era App Router) terletak pada cara menangani routing, rendering server/client, dan pengambilan data.
+
+| Aspek Teknis | Proyek Ini (Next.js Terbaru / App Router) | Next.js 12 (Versi Lama / Pages Router) | Penjelasan & Keunggulan Versi Terbaru |
+| :--- | :--- | :--- | :--- |
+| **Direktori Routing** | `app/` — Berbasis folder. Halaman wajib bernama `page.tsx`. | `pages/` — Berbasis nama file (misal `pages/users.tsx` -> `/users`). | Lebih terstruktur; satu folder rute bisa menampung `page.tsx`, `layout.tsx`, `loading.tsx`, dan `error.tsx` sekaligus. |
+| **Komponen Default** | **React Server Components (RSC)** secara default. | **Client Components** secara default (dirender di server lalu di-hydrate penuh di browser). | Kode database/Prisma bisa ditulis langsung di komponen server tanpa bocor ke browser, ukuran JS client jauh lebih kecil. |
+| **Interaktivitas Browser** | Wajib menambahkan direktif `"use client"` di baris paling atas jika memakai `useState`, `useEffect`, atau `onClick`. | Tidak mengenal `"use client"`, semua hook React langsung jalan di semua file. | Memisahkan logika tampilan statis (server) dengan logika interaktif (client) secara tegas. |
+| **Data Fetching** | Cukup `async function Page()` + `await prisma.user.findMany()` langsung di komponen. | Wajib memakai `getServerSideProps`, `getStaticProps`, atau `fetch()` di dalam `useEffect`. | Menghilangkan *boilerplate code* dan *prop drilling* berlapis-lapis. |
+| **Backend API** | **Route Handlers (`app/api/.../route.ts`)** mengekspor fungsi `GET`, `POST`, `PUT`, `DELETE`. | **API Routes (`pages/api/...`)** memakai satu handler `export default function handler(req, res)`. | Menggunakan standar Web `Request` dan `Response` modern; lebih rapi karena setiap metode HTTP punya fungsinya sendiri. |
+| **Layouting** | **Nested Layouts (`layout.tsx`)** — Sidebar/Navbar tidak ikut me-render ulang saat pindah sub-halaman. | Harus membungkus `_app.tsx` atau memanggil komponen `<Layout>` manual di setiap halaman. | Navigasi antar halaman admin terasa instan seperti SPA (*Single Page Application*). |
+| **Compiler & Bundler** | **Turbopack / SWC terbaru** (berbasis bahasa Rust). | **Webpack 5 / SWC generasi awal**. | Proses `npm run dev` dan *Fast Refresh* saat simpan file jauh lebih cepat. |
+
+---
+
+## 2. Perbandingan & Bedah Lengkap Prisma ORM (Lama vs Terbaru)
+
+**Prisma** adalah ORM (*Object-Relational Mapping*) modern untuk Node.js dan TypeScript yang menjembatani kode aplikasi dengan database MySQL secara *type-safe* (otomatis mendeteksi tipe kolom tabel).
+
+### A. Perbandingan Prisma Versi Lama (Era Next.js 12) vs Prisma Terbaru
+| Fitur / Konsep | Prisma Terbaru (v6 / v7 / v8+) | Prisma Lama (v3 / v4 — Era Next.js 12) | Keterangan |
+| :--- | :--- | :--- | :--- |
+| **Konfigurasi Koneksi** | Mendukung `prisma.config.ts` / driver adapters (seperti `@prisma/adapter-mariadb` / MySQL) serta pemisahan konfigurasi CLI dan runtime. | Semua URL koneksi dan generator hanya ditaruh di dalam `prisma/schema.prisma`. | Versi terbaru jauh lebih fleksibel untuk *edge runtime*, serverless, dan kontrol *connection pool*. |
+| **Generator Client** | Output client bisa dikustomisasi path-nya (misal `generated/prisma` atau `@prisma/client`) dengan validasi *contract* yang ketat. | Selalu menghasilkan file ke `node_modules/.prisma/client`. | Jika ada ketidaksesuaian versi CLI dan Client, versi terbaru langsung memunculkan error *contract* agar bug tidak lolos ke produksi. |
+| **Performa Query & Join** | Mendukung strategi `relationLoadStrategy: "join"` (melakukan `JOIN` langsung di level SQL). | Sering melakukan beberapa query terpisah di balik layar untuk relasi data. | Query relasi antar tabel di MySQL menjadi jauh lebih cepat dan hemat beban CPU database. |
+| **TypedSQL** | Mendukung penulisan query SQL mentah di file `.sql` yang otomatis diubah menjadi fungsi TypeScript *type-safe*. | Hanya memiliki `$queryRaw` yang tipe kembaliannya `unknown` / `any`. | Sangat membantu jika butuh query laporan kompleks tanpa kehilangan *autocomplete* TypeScript. |
+
+### B. Fungsi Utama Bagian-Bagian Prisma di Proyek Ini
+1. **`prisma/schema.prisma` (Blueprint Database):**
+   * `datasource db`: Menentukan jenis database (`mysql`) dan mengambil alamat koneksi dari `.env` (`env("DATABASE_URL")`).
+   * `generator client`: Menginstruksikan Prisma untuk membuat kode TypeScript (*Prisma Client*) berdasarkan model tabel.
+   * `model User { ... }`: Mendefinisikan struktur tabel, tipe data (`Int`, `String`, `DateTime`), *Primary Key* (`@id @default(autoincrement())`), nilai unik (`@unique`), serta pemetaan nama tabel asli (`@@map("users")`).
+2. **Prisma Client Singleton (`lib/prisma.ts`):**
+   * Berfungsi mencegah pembuatan koneksi MySQL berulang-ulang setiap kali Next.js melakukan *hot-reload* saat pengembangan (yang sering menyebabkan error `Too many connections`).
+
+---
+
+## 3. Panduan Lengkap Pembuatan CRUD: Next.js Terbaru vs Next.js 12
+
+Bagian ini membandingkan secara langsung alur pembuatan fitur **CRUD (Create, Read, Update, Delete)** dari lapisan database hingga tampilan antarmuka pada kedua versi Next.js.
+
+### Tahap 1: Model Database (`prisma/schema.prisma`) & Singleton (`lib/prisma.ts`)
+*(Bagian ini berlaku untuk kedua versi agar koneksi database stabil)*
+
+```prisma
+// prisma/schema.prisma
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+
+  @@map("users")
+}
+
+// lib/prisma.ts
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: ["query"],
+  });
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+#Backend API CRUD (Read, Create, Update, Delete)
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+// READ: Ambil semua data user (GET /api/users)
+export async function GET() {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { id: "desc" },
+    });
+    return NextResponse.json(users, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ message: "Gagal mengambil data" }, { status: 500 });
+  }
+}
+
+// CREATE: Tambah user baru (POST /api/users)
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const newUser = await prisma.user.create({
+      data: {
+        name: body.name,
+        email: body.email,
+        role: body.role || "user",
+      },
+    });
+    return NextResponse.json(newUser, { status: 201 });
+  } catch (error) {
+    return NextResponse.json({ message: "Gagal menambah user" }, { status: 500 });
+  }
+}
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+// UPDATE: Edit data berdasarkan ID (PUT /api/users/1)
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+
+    const updatedUser = await prisma.user.update({
+      where: { id: Number(id) },
+      data: {
+        name: body.name,
+        email: body.email,
+        role: body.role,
+      },
+    });
+    return NextResponse.json(updatedUser, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ message: "Gagal mengupdate user" }, { status: 500 });
+  }
+}
+
+// DELETE: Hapus data berdasarkan ID (DELETE /api/users/1)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    await prisma.user.delete({
+      where: { id: Number(id) },
+    });
+    return NextResponse.json({ message: "User berhasil dihapus" }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ message: "Gagal menghapus user" }, { status: 500 });
+  }
+}
+
+
+#[id]
+import type { NextApiRequest, NextApiResponse } from "next";
+import { prisma } from "../../../lib/prisma";
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const id = Number(req.query.id);
+
+  // UPDATE (PUT)
+  if (req.method === "PUT") {
+    const { name, email, role } = req.body;
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { name, email, role },
+    });
+    return res.status(200).json(updatedUser);
+  }
+
+  // DELETE (DELETE)
+  if (req.method === "DELETE") {
+    await prisma.user.delete({ where: { id } });
+    return res.status(200).json({ message: "Berhasil dihapus" });
+  }
+
+  return res.status(405).json({ message: "Method tidak diizinkan" });
+}
+
+# ==============================================================================
+# ALUR KERJA HARIAN (MENYIMPAN & MENGIRIM PERUBAHAN KE GITHUB)
+# ==============================================================================
+
+# 1. Mengecek status file (untracked / merah = baru, modified = diubah, staged / hijau = siap commit)
+git status
+
+# 2. Menambahkan seluruh perubahan file ke Staging Area
+# (File/folder di dalam .gitignore seperti .env, node_modules/, .next/ otomatis dilewati)
+git add .
+
+# 3. Menambahkan satu file atau folder tertentu saja ke Staging Area
+git add app/api/users/route.ts
+
+# 4. Menyimpan riwayat perubahan (snapshot) ke repositori lokal
+git commit -m "feat: melengkapi modul user management dan dokumentasi CRUD"
+
+# 5. Mengirim commit terbaru dari komputer lokal ke GitHub (branch main)
+git push origin main
+
+# 6. Mengambil & menggabungkan update terbaru dari GitHub ke komputer lokal
+git pull origin main
+
+# ==============================================================================
+# SETUP AWAL REPOSITORI & REMOTE GITHUB
+# ==============================================================================
+
+# 7. Menginisialisasi folder proyek menjadi repositori Git lokal
+git init
+
+# 8. Mengatur nama dan email identitas pembuat commit
+git config user.name "Cepi Handani"
+git config user.email "email_github_kamu@example.com"
+
+# 9. Menghubungkan repositori lokal ke URL repositori GitHub
+git remote add origin [https://github.com/Ceps-Sys/UKK_SMT4_Cepi.git](https://github.com/Ceps-Sys/UKK_SMT4_Cepi.git)
+
+# 10. Mengecek daftar URL remote yang terhubung
+git remote -v
+
+# 11. Mengubah nama branch default menjadi main
+git branch -M main
+
+# 12. Push pertama kali sekaligus mengatur upstream (-u) agar selanjutnya cukup ketik `git push`
+git push -u origin main
+
+# ==============================================================================
+# INSPEKSI RIWAYAT, BRANCHING & PERBAIKAN KESALAHAN GIT
+# ==============================================================================
+
+# 13. Melihat riwayat commit secara ringkas dalam 1 baris per commit
+git log --oneline -n 10
+
+# 14. Melihat perbedaan baris kode yang diubah sebelum di-add/commit
+git diff
+
+# 15. Membatalkan file yang sudah terlanjur masuk `git add` (mengembalikan ke unstaged)
+git reset HEAD nama_file.tsx
+
+# 16. Menghapus file dari pelacakan Git TANPA menghapus file fisik di komputer
+# (Wajib dipakai jika file .env atau folder AI tools terlanjur ter-commit sebelum masuk .gitignore)
+git rm --cached .env
+git rm -r --cached .agents/ .claude/ .cursor/
+
+# 17. Membuat branch baru untuk eksperimen fitur tanpa mengganggu branch main
+git checkout -b fitur-baru

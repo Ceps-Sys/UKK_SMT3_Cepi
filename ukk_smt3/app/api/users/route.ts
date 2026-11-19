@@ -87,8 +87,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email sudah digunakan." }, { status: 409 })
     }
 
+    // Tentukan prefix berdasarkan role
+    const prefix = role === "admin" ? "ADM" : "STF"
+
+    const allUsers: any[] = await usersTable.all()
+    let maxNumber = 0
+    for (const u of allUsers) {
+      if (typeof u.kode_user === "string" && u.kode_user.startsWith(prefix)) {
+        const num = Number.parseInt(u.kode_user.slice(prefix.length), 10)
+        if (!Number.isNaN(num) && num > maxNumber) {
+          maxNumber = num
+        }
+      }
+    }
+    const kode_user = `${prefix}${String(maxNumber + 1).padStart(3, "0")}`
+
     const passwordHash = await hashUserPassword(password)
     const created = await usersTable.create({
+      kode_user,
       fullname,
       email,
       password: passwordHash,

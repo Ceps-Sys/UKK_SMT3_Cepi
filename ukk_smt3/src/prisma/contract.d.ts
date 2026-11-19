@@ -19,7 +19,7 @@ import type {
 } from '@prisma/orm-mysql/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'5dc697865cfc0242a899c0d819a26d9da565b56da341e99b63284187b818d8d3'>;
+  StorageHashBase<'9f7e9b0cc72e36a93f7585d8551d41e8554514f414017500258827e1f9c5bd61'>;
 export type ExecutionHash =
   ExecutionHashBase<'01be4a66bdef5ccdc9f1099b9561ff3ed2aa95a9da18f55f696107a9ef36ec38'>;
 export type ProfileHash =
@@ -75,6 +75,7 @@ export namespace Models {
     email: FieldOutputTypes['__unbound__']['users']['email'];
     fullname: FieldOutputTypes['__unbound__']['users']['fullname'];
     id: FieldOutputTypes['__unbound__']['users']['id'];
+    kode_user: FieldOutputTypes['__unbound__']['users']['kode_user'];
     password: FieldOutputTypes['__unbound__']['users']['password'];
     role: FieldOutputTypes['__unbound__']['users']['role'];
     token: FieldOutputTypes['__unbound__']['users']['token'];
@@ -139,6 +140,13 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
+                readonly kode_user: {
+                  readonly dataType: 'mysql/varchar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly length: 191 };
+                  readonly many: false;
+                };
                 readonly password: {
                   readonly dataType: 'mysql/varchar';
                   readonly codecId: 'sql/varchar@1';
@@ -173,7 +181,10 @@ type ContractBase = Omit<
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [{ readonly columns: readonly ['email'] }];
+              uniques: readonly [
+                { readonly columns: readonly ['kode_user'] },
+                { readonly columns: readonly ['email'] },
+              ];
               indexes: readonly [];
               foreignKeys: readonly [];
             };
@@ -224,6 +235,14 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'mysql/int@1' };
               };
+              readonly kode_user: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly typeParams: { readonly length: 191 };
+                };
+              };
               readonly password: {
                 readonly nullable: false;
                 readonly type: {
@@ -266,6 +285,7 @@ type ContractBase = Omit<
                 readonly email: { readonly column: 'email' };
                 readonly fullname: { readonly column: 'fullname' };
                 readonly id: { readonly column: 'id' };
+                readonly kode_user: { readonly column: 'kode_user' };
                 readonly password: { readonly column: 'password' };
                 readonly role: { readonly column: 'role' };
                 readonly token: { readonly column: 'token' };

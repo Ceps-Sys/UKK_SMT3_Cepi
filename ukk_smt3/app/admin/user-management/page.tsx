@@ -25,6 +25,7 @@ import {
  
 type ManagedUser = {
     id: number
+    kode_user: string | null
     fullname: string
     email: string
     role: string
@@ -131,6 +132,7 @@ export default function UserManagementPage() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>No</TableHead>
+                            <TableHead>Kode User</TableHead>
                             <TableHead>Nama lengkap</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Role</TableHead>
@@ -141,12 +143,13 @@ export default function UserManagementPage() {
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
-                            <TableRow><TableCell colSpan={7} className="text-center">Memuat user...</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={8} className="text-center">Memuat user...</TableCell></TableRow>
                         ) : users.length === 0 ? (
-                            <TableRow><TableCell colSpan={7} className="text-center">Belum ada user.</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={8} className="text-center">Belum ada user.</TableCell></TableRow>
                         ) : users.map((user, index) => (
                             <TableRow key={user.id}>
                                 <TableCell>{(currentPage - 1) * PAGE_SIZE + index + 1}</TableCell>
+                                <TableCell className="font-medium">{user.kode_user ?? "-"}</TableCell>
                                 <TableCell className="font-medium">{user.fullname}</TableCell>
                                 <TableCell>{user.email}</TableCell>
                                 <TableCell className="capitalize">{user.role}</TableCell>

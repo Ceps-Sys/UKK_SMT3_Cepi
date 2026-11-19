@@ -1,0 +1,111 @@
+[
+  {
+    "id": "column.users.kode_user",
+    "label": "Add column kode_user on users",
+    "summary": "Adds column kode_user to users",
+    "operationClass": "additive",
+    "target": {
+      "id": "mysql",
+      "details": {
+        "objectType": "column",
+        "name": "kode_user",
+        "table": "users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"users\" exists",
+        "sql": "SELECT (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?) > 0 AS result",
+        "params": [
+          "users"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"users\""
+        }
+      },
+      {
+        "description": "ensure column \"kode_user\" is missing on \"users\"",
+        "sql": "SELECT (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?) = 0 AS result",
+        "params": [
+          "users",
+          "kode_user"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"kode_user\" on \"users\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"kode_user\" to \"users\"",
+        "sql": "ALTER TABLE `users` ADD COLUMN `kode_user` varchar(191)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"kode_user\" exists on \"users\"",
+        "sql": "SELECT (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?) > 0 AS result",
+        "params": [
+          "users",
+          "kode_user"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"kode_user\" on \"users\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "unique.users.users_kode_user_key",
+    "label": "Add unique constraint users_kode_user_key on users",
+    "summary": "Adds unique constraint users_kode_user_key on users",
+    "operationClass": "additive",
+    "target": {
+      "id": "mysql",
+      "details": {
+        "objectType": "unique",
+        "name": "users_kode_user_key",
+        "table": "users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure unique constraint \"users_kode_user_key\" is missing",
+        "sql": "SELECT (SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_NAME = ? AND CONSTRAINT_TYPE = ?) = 0 AS result",
+        "params": [
+          "users",
+          "users_kode_user_key",
+          "UNIQUE"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "unique constraint \"users_kode_user_key\" on \"users\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"users_kode_user_key\"",
+        "sql": "ALTER TABLE `users` ADD CONSTRAINT `users_kode_user_key` UNIQUE (`kode_user`)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"users_kode_user_key\" exists",
+        "sql": "SELECT (SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_NAME = ? AND CONSTRAINT_TYPE = ?) > 0 AS result",
+        "params": [
+          "users",
+          "users_kode_user_key",
+          "UNIQUE"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "unique constraint \"users_kode_user_key\" on \"users\""
+        }
+      }
+    ]
+  }
+]

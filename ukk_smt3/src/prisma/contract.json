@@ -52,6 +52,16 @@
                   "kind": "scalar"
                 }
               },
+              "kode_user": {
+                "nullable": true,
+                "type": {
+                  "codecId": "sql/varchar@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "length": 191
+                  }
+                }
+              },
               "password": {
                 "nullable": false,
                 "type": {
@@ -107,6 +117,9 @@
                 },
                 "id": {
                   "column": "id"
+                },
+                "kode_user": {
+                  "column": "kode_user"
                 },
                 "password": {
                   "column": "password"
@@ -173,6 +186,14 @@
                   },
                   "nullable": false
                 },
+                "kode_user": {
+                  "codecId": "sql/varchar@1",
+                  "dataType": "mysql/varchar",
+                  "nullable": true,
+                  "typeParams": {
+                    "length": 191
+                  }
+                },
                 "password": {
                   "codecId": "sql/varchar@1",
                   "dataType": "mysql/varchar",
@@ -220,6 +241,11 @@
               "uniques": [
                 {
                   "columns": [
+                    "kode_user"
+                  ]
+                },
+                {
+                  "columns": [
                     "email"
                   ]
                 }
@@ -230,7 +256,7 @@
         "id": "__unbound__"
       }
     },
-    "storageHash": "5dc697865cfc0242a899c0d819a26d9da565b56da341e99b63284187b818d8d3"
+    "storageHash": "9f7e9b0cc72e36a93f7585d8551d41e8554514f414017500258827e1f9c5bd61"
   },
   "execution": {
     "executionHash": "01be4a66bdef5ccdc9f1099b9561ff3ed2aa95a9da18f55f696107a9ef36ec38",

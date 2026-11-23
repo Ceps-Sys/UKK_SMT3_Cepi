@@ -1,0 +1,92 @@
+// use prisma-8
+
+generator client {
+  provider = "prisma-client"
+  output   = "../../generated/prisma"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model prisma_ledger {
+  id                       BigInt   @id @default(autoincrement())
+  created_at               DateTime @default(now())
+  space                    String
+  migration_name           String   @db.Text
+  migration_hash           String
+  origin_core_hash         String?
+  origin_profile_hash      String?
+  destination_core_hash    String
+  destination_profile_hash String?
+  contract_json_before     String?  @db.LongText
+  contract_json_after      String?  @db.LongText
+  operations               String   @db.LongText
+
+  @@map("_prisma_ledger")
+}
+
+model prisma_marker {
+  space             String   @id @default("app")
+  core_hash         String
+  profile_hash      String
+  contract_json     String?  @db.LongText
+  canonical_version Int?
+  updated_at        DateTime @default(now())
+  app_tag           String?  @db.Text
+  meta              String   @default(dbgenerated("(_utf8mb4'{}')")) @db.Text
+  invariants        String   @default(dbgenerated("(_utf8mb4'[]')")) @db.Text
+
+  @@map("_prisma_marker")
+}
+
+model facility {
+  kode_facility      String               @id @db.VarChar(6)
+  nama_facility      String               @db.VarChar(50)
+  created_at         DateTime             @db.Timestamp(0)
+  updated_at         DateTime             @default(now()) @db.Timestamp(0)
+  type_unit_facility type_unit_facility[] @ignore
+}
+
+model type_unit {
+  id_unit_type       Int                  @id @default(autoincrement())
+  nama_type_unit     String               @db.VarChar(50)
+  branch_id          type_unit_branch_id
+  created_at         DateTime             @db.Timestamp(0)
+  updated_at         DateTime             @db.Timestamp(0)
+  type_unit_facility type_unit_facility[] @ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model type_unit_facility {
+  id_unit_type  Int
+  kode_facility String    @db.VarChar(6)
+  facility      facility  @relation(fields: [kode_facility], references: [kode_facility], onUpdate: Restrict, map: "type_unit_facility_ibfk_1")
+  type_unit     type_unit @relation(fields: [id_unit_type], references: [id_unit_type], onUpdate: Restrict, map: "type_unit_facility_ibfk_2")
+
+  @@index([id_unit_type], map: "id_unit_type")
+  @@index([kode_facility], map: "kode_facility")
+  @@ignore
+}
+
+model users {
+  id         Int      @id @default(autoincrement())
+  fullname   String
+  email      String   @unique
+  password   String
+  role       String   @default("staff")
+  token      String?  @db.Text
+  created_at DateTime @default(now())
+  updated_at DateTime
+  kode_user  String?  @unique
+}
+
+enum type_unit_branch_id {
+  BRANCH_1 @map("1")
+  BRANCH_2 @map("2")
+}

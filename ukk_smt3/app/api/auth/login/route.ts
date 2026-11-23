@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
-import { db } from "@/src/prisma/db"
+import { prisma } from "@/src/prisma/db"
 import { createUserJwt, verifyUserPassword } from "@/lib/user-security"
 
-const usersTable = db.orm.users
+const usersTable = prisma.orm.users
 
 export async function POST(request: Request) {
   let body: Record<string, unknown>

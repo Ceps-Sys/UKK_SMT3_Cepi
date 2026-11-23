@@ -33,7 +33,8 @@
   // }
   // */
 
-  import { cookies } from "next/headers"
+import { cookies } from "next/headers"
+import { connection } from "next/server"
 import { db } from "@/src/prisma/db"
 import { verifyUserJwt } from "@/lib/user-security"
 

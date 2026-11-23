@@ -29,28 +29,17 @@
     },
 
     {
-      "name": "category",
-      "url": "../../admin/categories",
+      "name": "Type Unit",
+      "url": "../../admin/type_unit",
       "icon": "settings",
     },
 
     {
-      "name": "jurusan",
-      "url": "../../admin/jurusan",
-      "icon": "home",
-    },
-
-    {
-      "name": "article",
-      "url": "../../admin/article",
-      "icon": "menu",
-    },
-
-    {
-      "name": "profile",
-      "url": "../../admin/profile",
-      "icon": "user",
+      "name": "Facilities",
+      "url": "../../admin/fasilitas",
+      "icon": "settings",
     }
+
 
   ]
   

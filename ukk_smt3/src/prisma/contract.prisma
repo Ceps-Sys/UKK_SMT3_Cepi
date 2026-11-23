@@ -1,13 +1,1 @@
-// use prisma-8
-
-model users {
-  id         Int      @id @default(autoincrement())
-  kode_user  String?  @unique
-  fullname   String
-  email      String   @unique
-  password   String
-  role       String   @default("staff")
-  token      String?
-  created_at DateTime @default(now()) @onCreate(now())
-  updated_at temporal.UpdatedAt
-}
+contract: "./src/prisma/contract.prisma",

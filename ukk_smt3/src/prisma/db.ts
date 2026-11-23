@@ -10,3 +10,6 @@ export const db = mysql({
   contract,
   url: process.env['DATABASE_URL']!,
 });
+
+export const prisma = db;
+  

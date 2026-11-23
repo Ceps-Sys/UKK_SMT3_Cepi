@@ -1,0 +1,40 @@
+[1mdiff --git a/ukk_smt3/src/prisma/db.ts b/ukk_smt3/src/prisma/db.ts[m
+[1mindex 6aeec8b..2234c26 100644[m
+[1m--- a/ukk_smt3/src/prisma/db.ts[m
+[1m+++ b/ukk_smt3/src/prisma/db.ts[m
+[36m@@ -1,12 +1,22 @@[m
+[31m-import 'dotenv/config';[m
+[31m-import mysql from '@prisma/orm-mysql/runtime';[m
+[31m-import { contractFromJson } from '@prisma/orm-mysql/static';[m
+[31m-import type { Contract } from './contract.d.js';[m
+[31m-import contractJson from './contract.json' with { type: 'json' };[m
+[31m-[m
+[31m-export const contract = contractFromJson<Contract>(contractJson);[m
+[31m-[m
+[31m-export const db = mysql({[m
+[31m-  contract,[m
+[31m-  url: process.env['DATABASE_URL']!,[m
+[31m-});[m
+\ No newline at end of file[m
+[32m+[m[32mimport "dotenv/config";[m
+[32m+[m[32mimport { PrismaMariaDb } from "@prisma/adapter-mariadb";[m
+[32m+[m[32mimport { PrismaClient } from "../../generated/prisma/client";[m
+[32m+[m
+[32m+[m[32mconst globalForPrisma = globalThis as unknown as {[m
+[32m+[m[32m  prisma: PrismaClient | undefined;[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32mfunction createPrismaClient() {[m
+[32m+[m[32m  const adapter = new PrismaMariaDb(process.env.DATABASE_URL!);[m
+[32m+[m[32m  return new PrismaClient({ adapter });[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mexport const prisma = globalForPrisma.prisma ?? createPrismaClient();[m
+[32m+[m
+[32m+[m[32mexport const db = Object.assign(prisma, {[m
+[32m+[m[32m  orm: prisma,[m
+[32m+[m[32m});[m
+[32m+[m
+[32m+[m[32mif (process.env.NODE_ENV !== "production") {[m
+[32m+[m[32m  globalForPrisma.prisma = prisma;[m
+[32m+[m[32m}[m

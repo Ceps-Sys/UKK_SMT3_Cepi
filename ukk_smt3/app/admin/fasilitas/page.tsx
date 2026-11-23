@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useEffect, useState } from "react"
@@ -7,371 +6,223 @@ import { Pencil, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import {
-    Pagination,
-    PaginationContent,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "@/components/ui/pagination"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table"
 
-type ManagedFacility = {
-    kode_facility: string
-    nama_facility: string
-    created_at: string
-    updated_at: string
+type FacilityItem = {
+  kode_facility: string
+  nama_facility: string
+  created_at?: string
+  updated_at?: string
 }
 
-const PAGE_SIZE = 10
+type PaginationMeta = {
+  page: number
+  pageSize: number
+  totalFacilities: number
+  totalPages: number
+}
 
-export default function FacilityManagementPage() {
-    const router = useRouter()
+function formatDate(dateValue?: string) {
+  if (!dateValue) return "-"
+  const date = new Date(dateValue)
+  if (Number.isNaN(date.getTime())) return "-"
+  return date.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  })
+}
 
-    const [facilities, setFacilities] = useState<ManagedFacility[]>([])
-    const [currentPage, setCurrentPage] = useState(1)
-    const [totalFacilities, setTotalFacilities] = useState(0)
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState("")
+export default function FasilitasPage() {
+  const router = useRouter()
+  const [facilities, setFacilities] = useState<FacilityItem[]>([])
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    page: 1,
+    pageSize: 10,
+    totalFacilities: 0,
+    totalPages: 1,
+  })
+  const [isLoading, setIsLoading] = useState(true)
+  const [deletingCode, setDeletingCode] = useState<string | null>(null)
+  const [error, setError] = useState("")
 
-    const totalPages = Math.max(
-        1,
-        Math.ceil(totalFacilities / PAGE_SIZE)
-    )
-
-    async function loadFacilities(page = currentPage) {
-        setIsLoading(true)
-        setError("")
-
-        try {
-            const response = await fetch(
-                `/api/fasilitas?page=${page}&pageSize=${PAGE_SIZE}`
-            )
-
-            const result = await response.json()
-
-            if (!response.ok) {
-                throw new Error(
-                    result.error ?? "Gagal memuat facility."
-                )
-            }
-
-            setFacilities(result.facilities)
-            setTotalFacilities(result.pagination.totalFacilities)
-            setCurrentPage(result.pagination.page)
-        } catch (loadError) {
-            setError(
-                loadError instanceof Error
-                    ? loadError.message
-                    : "Gagal memuat facility."
-            )
-        } finally {
-            setIsLoading(false)
-        }
+  async function loadFacilities(targetPage = 1) {
+    setIsLoading(true)
+    setError("")
+    try {
+      const response = await fetch(`/api/fasilitas?page=${targetPage}&pageSize=10`)
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result.error ?? "Gagal memuat data facility.")
+      }
+      setFacilities(result.facilities ?? [])
+      if (result.pagination) {
+        setPagination(result.pagination)
+      }
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Gagal memuat data facility.")
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    useEffect(() => {
-        let isActive = true
+  useEffect(() => {
+    void loadFacilities(1)
+  }, [])
 
-        async function initialLoad() {
-            try {
-                const response = await fetch(
-                    `/api/fasilitas/?page=1&pageSize=${PAGE_SIZE}`
-                )
+  async function handleDelete(kodeFacility: string) {
+    if (!confirm(`Yakin ingin menghapus facility ${kodeFacility}?`)) return
 
-                const result = await response.json()
-
-                if (!response.ok) {
-                    throw new Error(
-                        result.error ?? "Gagal memuat facility."
-                    )
-                }
-
-                if (isActive) {
-                    setFacilities(result.facilities)
-                    setTotalFacilities(
-                        result.pagination.totalFacilities
-                    )
-                    setCurrentPage(result.pagination.page)
-                }
-            } catch (loadError) {
-                if (isActive) {
-                    setError(
-                        loadError instanceof Error
-                            ? loadError.message
-                            : "Gagal memuat facility."
-                    )
-                }
-            } finally {
-                if (isActive) {
-                    setIsLoading(false)
-                }
-            }
-        }
-
-        void initialLoad()
-
-        return () => {
-            isActive = false
-        }
-    }, [])
-
-    function goToPage(page: number) {
-        if (page < 1 || page > totalPages || isLoading) return
-
-        void loadFacilities(page)
+    setDeletingCode(kodeFacility)
+    setError("")
+    try {
+      const response = await fetch(`/api/fasilitas/${kodeFacility}`, {
+        method: "DELETE",
+      })
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result.error ?? "Gagal menghapus facility.")
+      }
+      await loadFacilities(pagination.page)
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Gagal menghapus facility.")
+    } finally {
+      setDeletingCode(null)
     }
+  }
 
-    async function deleteFacility(facility: ManagedFacility) {
-        const confirmed = window.confirm(
-            `Hapus facility ${facility.nama_facility} (${facility.kode_facility})?`
-        )
+  return (
+    <Card className="m-6 p-6 space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Facility Management</h1>
+          <p className="text-sm text-muted-foreground">
+            Kelola data fasilitas apartemen.
+          </p>
+        </div>
+        <Button onClick={() => router.push("/admin/fasilitas/form/add")}>
+          <Plus aria-hidden="true" />
+          Tambah facility
+        </Button>
+      </div>
 
-        if (!confirmed) return
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
 
-        setError("")
-
-        try {
-            const response = await fetch(
-                `/api/facilities/${facility.kode_facility}`,
-                {
-                    method: "DELETE",
-                }
-            )
-
-            const result = await response.json()
-
-            if (!response.ok) {
-                throw new Error(
-                    result.error ?? "Gagal menghapus facility."
-                )
-            }
-
-            if (facilities.length === 1 && currentPage > 1) {
-                await loadFacilities(currentPage - 1)
-            } else {
-                await loadFacilities(currentPage)
-            }
-        } catch (deleteError) {
-            setError(
-                deleteError instanceof Error
-                    ? deleteError.message
-                    : "Gagal menghapus facility."
-            )
-        }
-    }
-
-    return (
-        <Card className="m-6 px-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h1 className="mb-1 text-2xl font-bold">
-                        Facility Management
-                    </h1>
-
-                    <p className="text-sm text-muted-foreground">
-                        Kelola data fasilitas apartemen.
-                    </p>
-                </div>
-
-                <Button
-                    onClick={() =>
-                        router.push("/admin/fasilitas/form/add")
-                    }
-                >
-                    <Plus aria-hidden="true" />
-                    Tambah facility
-                </Button>
-            </div>
-
-            {error && (
-                <p
-                    role="alert"
-                    className="mt-4 text-sm text-destructive"
-                >
-                    {error}
-                </p>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-16">No</TableHead>
+              <TableHead className="w-40">Kode Facility</TableHead>
+              <TableHead>Nama Facility</TableHead>
+              <TableHead className="w-36">Dibuat</TableHead>
+              <TableHead className="w-36">Diperbarui</TableHead>
+              <TableHead className="w-28 text-right">Aksi</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-6">
+                  Memuat data facility...
+                </TableCell>
+              </TableRow>
+            ) : facilities.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                  Belum ada data facility.
+                </TableCell>
+              </TableRow>
+            ) : (
+              facilities.map((item, index) => (
+                <TableRow key={item.kode_facility}>
+                  <TableCell>
+                    {(pagination.page - 1) * pagination.pageSize + index + 1}
+                  </TableCell>
+                  <TableCell className="font-medium">{item.kode_facility}</TableCell>
+                  <TableCell>{item.nama_facility}</TableCell>
+                  <TableCell>{formatDate(item.created_at)}</TableCell>
+                  <TableCell>{formatDate(item.updated_at)}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="inline-flex items-center justify-end gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                          router.push(`/admin/fasilitas/form/${item.kode_facility}`)
+                        }
+                        title="Edit facility"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={deletingCode === item.kode_facility}
+                        onClick={() => handleDelete(item.kode_facility)}
+                        title="Hapus facility"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
+          </TableBody>
+        </Table>
+      </div>
 
-            <div className="mt-5 overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>No</TableHead>
-                            <TableHead>Kode Facility</TableHead>
-                            <TableHead>Nama Facility</TableHead>
-                            <TableHead>Dibuat</TableHead>
-                            <TableHead>Diperbarui</TableHead>
-                            <TableHead className="text-right">
-                                Aksi
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-
-                    <TableBody>
-                        {isLoading ? (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={6}
-                                    className="text-center"
-                                >
-                                    Memuat facility...
-                                </TableCell>
-                            </TableRow>
-                        ) : facilities.length === 0 ? (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={6}
-                                    className="text-center"
-                                >
-                                    Belum ada facility.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            facilities.map((facility, index) => (
-                                <TableRow
-                                    key={facility.kode_facility}
-                                >
-                                    <TableCell>
-                                        {(currentPage - 1) *
-                                            PAGE_SIZE +
-                                            index +
-                                            1}
-                                    </TableCell>
-
-                                    <TableCell className="font-medium">
-                                        {facility.kode_facility}
-                                    </TableCell>
-
-                                    <TableCell className="font-medium">
-                                        {facility.nama_facility}
-                                    </TableCell>
-
-                                    <TableCell>
-                                        {new Date(
-                                            facility.created_at
-                                        ).toLocaleDateString("id-ID")}
-                                    </TableCell>
-
-                                    <TableCell>
-                                        {new Date(
-                                            facility.updated_at
-                                        ).toLocaleDateString("id-ID")}
-                                    </TableCell>
-
-                                    <TableCell>
-                                        <div className="flex justify-end gap-1">
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                aria-label={`Edit ${facility.nama_facility}`}
-                                                title="Edit facility"
-                                                onClick={() =>
-                                                    router.push(
-                                                        `/admin/fasilitas/form/${facility.kode_facility}`
-                                                    )
-                                                }
-                                            >
-                                                <Pencil aria-hidden="true" />
-                                            </Button>
-
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                aria-label={`Hapus ${facility.nama_facility}`}
-                                                title="Hapus facility"
-                                                onClick={() =>
-                                                    void deleteFacility(
-                                                        facility
-                                                    )
-                                                }
-                                            >
-                                                <Trash2 aria-hidden="true" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
-
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-muted-foreground">
-                    Halaman {currentPage} dari {totalPages} (
-                    {totalFacilities} facility)
-                </p>
-
-                <Pagination>
-                    <PaginationContent>
-                        <PaginationItem>
-                            <PaginationPrevious
-                                href="#"
-                                aria-disabled={
-                                    currentPage === 1 || isLoading
-                                }
-                                className={
-                                    currentPage === 1 || isLoading
-                                        ? "pointer-events-none opacity-50"
-                                        : undefined
-                                }
-                                onClick={(e) => {
-                                    e.preventDefault()
-                                    goToPage(currentPage - 1)
-                                }}
-                            />
-                        </PaginationItem>
-
-                        {Array.from(
-                            { length: totalPages },
-                            (_, i) => i + 1
-                        ).map((page) => (
-                            <PaginationItem key={page}>
-                                <PaginationLink
-                                    href="#"
-                                    isActive={page === currentPage}
-                                    onClick={(e) => {
-                                        e.preventDefault()
-                                        goToPage(page)
-                                    }}
-                                >
-                                    {page}
-                                </PaginationLink>
-                            </PaginationItem>
-                        ))}
-
-                        <PaginationItem>
-                            <PaginationNext
-                                href="#"
-                                aria-disabled={
-                                    currentPage === totalPages ||
-                                    isLoading
-                                }
-                                className={
-                                    currentPage === totalPages ||
-                                    isLoading
-                                        ? "pointer-events-none opacity-50"
-                                        : undefined
-                                }
-                                onClick={(e) => {
-                                    e.preventDefault()
-                                    goToPage(currentPage + 1)
-                                }}
-                            />
-                        </PaginationItem>
-                    </PaginationContent>
-                </Pagination>
-            </div>
-        </Card>
-    )
+      {/* Pagination */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+        <p>
+          Halaman {pagination.page} dari {pagination.totalPages} ({pagination.totalFacilities} facility)
+        </p>
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={pagination.page <= 1 || isLoading}
+            onClick={() => loadFacilities(pagination.page - 1)}
+          >
+            &lt; Previous
+          </Button>
+          {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((pageNum) => (
+            <Button
+              key={pageNum}
+              type="button"
+              variant={pageNum === pagination.page ? "outline" : "ghost"}
+              size="sm"
+              disabled={isLoading}
+              onClick={() => loadFacilities(pageNum)}
+            >
+              {pageNum}
+            </Button>
+          ))}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={pagination.page >= pagination.totalPages || isLoading}
+            onClick={() => loadFacilities(pagination.page + 1)}
+          >
+            Next &gt;
+          </Button>
+        </div>
+      </div>
+    </Card>
+  )
 }

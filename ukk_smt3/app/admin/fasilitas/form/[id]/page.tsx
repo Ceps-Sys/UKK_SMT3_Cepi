@@ -1,10 +1,19 @@
-import { UserForm } from "../user-form"
+import { Suspense } from "react"
+import { FasilitasForm } from "@/app/admin/fasilitas/form/facility-form"
 
-type EditUserPageProps = {
+type EditFasilitasPageProps = {
   params: Promise<{ id: string }>
 }
 
-export default async function EditUserPage({ params }: EditUserPageProps) {
+async function EditFasilitasLoader({ params }: EditFasilitasPageProps) {
   const { id } = await params
-  return <UserForm userId={id} />
+  return <FasilitasForm facilityId={id} />
+}
+
+export default function EditFasilitasPage({ params }: EditFasilitasPageProps) {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Memuat form...</div>}>
+      <EditFasilitasLoader params={params} />
+    </Suspense>
+  )
 }

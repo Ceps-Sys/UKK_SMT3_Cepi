@@ -18,29 +18,24 @@
   const listmenu = [
     {
       "name": "dasboard",
-      "url": "../../admin",
-      "icon": " dasboard",
+      "url": "/admin",
+      "icon": "dasboard",
     },
-
     {
       "name": "user management",
-      "url": "../../admin/user-management",
+      "url": "/admin/user-management",
       "icon": "users",
     },
-
     {
       "name": "Type Unit",
-      "url": "../../admin/type_unit",
+      "url": "/admin/type_unit",
       "icon": "settings",
     },
-
     {
       "name": "Facilities",
-      "url": "../../admin/fasilitas",
+      "url": "/admin/fasilitas",
       "icon": "settings",
     }
-
-
   ]
   
   export function AppSidebar() {

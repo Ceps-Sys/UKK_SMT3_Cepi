@@ -1,10 +1,19 @@
-import { UserForm } from "../user-form"
+import { Suspense } from "react"
+import { TypeUnitForm } from "@/app/admin/type_unit/form/type_unit-form"
 
-type EditUserPageProps = {
+type EditTypeUnitPageProps = {
   params: Promise<{ id: string }>
 }
 
-export default async function EditUserPage({ params }: EditUserPageProps) {
+async function EditTypeUnitLoader({ params }: EditTypeUnitPageProps) {
   const { id } = await params
-  return <UserForm userId={id} />
+  return <TypeUnitForm unitId={id} />
+}
+
+export default function EditTypeUnitPage({ params }: EditTypeUnitPageProps) {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">Memuat form...</div>}>
+      <EditTypeUnitLoader params={params} />
+    </Suspense>
+  )
 }

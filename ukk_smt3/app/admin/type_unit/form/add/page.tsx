@@ -1,5 +1,5 @@
-import { UserForm } from "../user-form"
+import { TypeUnitForm } from "@/app/admin/type_unit/form/type_unit-form"
 
-export default function AddUserPage() {
-  return <UserForm />
+export default function AddTypeUnitPage() {
+  return <TypeUnitForm />
 }

@@ -19,9 +19,9 @@ import type {
 } from '@prisma/orm-mysql/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'9f7e9b0cc72e36a93f7585d8551d41e8554514f414017500258827e1f9c5bd61'>;
+  StorageHashBase<'5b54d125756674b8bf8a91565aabebda3691db699c35737bfcdfbd97fa4b7aa6'>;
 export type ExecutionHash =
-  ExecutionHashBase<'01be4a66bdef5ccdc9f1099b9561ff3ed2aa95a9da18f55f696107a9ef36ec38'>;
+  ExecutionHashBase<'f3e99889fba586e3f9bc2141686c92182fd19bf3901e7954c0b8171ee2758288'>;
 export type ProfileHash =
   ProfileHashBase<'5212eb1a1220f2d24de13f4efadd4c703f3a1098a5f57e09da0dc26ebb7201d0'>;
 
@@ -70,6 +70,26 @@ export type StorageColumnInputTypes = ColumnTypesFromStorage<
 >;
 
 export namespace Models {
+  export type facility = {
+    created_at: FieldOutputTypes['__unbound__']['facility']['created_at'];
+    kode_facility: FieldOutputTypes['__unbound__']['facility']['kode_facility'];
+    nama_facility: FieldOutputTypes['__unbound__']['facility']['nama_facility'];
+    updated_at: FieldOutputTypes['__unbound__']['facility']['updated_at'];
+    readonly [RelationKeys]?: never;
+  };
+  export type type_unit = {
+    branch_id: FieldOutputTypes['__unbound__']['type_unit']['branch_id'];
+    created_at: FieldOutputTypes['__unbound__']['type_unit']['created_at'];
+    id_unit_type: FieldOutputTypes['__unbound__']['type_unit']['id_unit_type'];
+    nama_type_unit: FieldOutputTypes['__unbound__']['type_unit']['nama_type_unit'];
+    updated_at: FieldOutputTypes['__unbound__']['type_unit']['updated_at'];
+    readonly [RelationKeys]?: never;
+  };
+  export type type_unit_facility = {
+    id_unit_type: FieldOutputTypes['__unbound__']['type_unit_facility']['id_unit_type'];
+    kode_facility: FieldOutputTypes['__unbound__']['type_unit_facility']['kode_facility'];
+    readonly [RelationKeys]?: never;
+  };
   export type users = {
     created_at: FieldOutputTypes['__unbound__']['users']['created_at'];
     email: FieldOutputTypes['__unbound__']['users']['email'];
@@ -85,6 +105,9 @@ export namespace Models {
 }
 
 export declare const models: {
+  facility: Models.facility;
+  type_unit: Models.type_unit;
+  type_unit_facility: Models.type_unit_facility;
   users: Models.users;
 };
 
@@ -106,6 +129,111 @@ type ContractBase = Omit<
         readonly kind: 'mysql-namespace';
         readonly entries: {
           readonly table: {
+            readonly facility: {
+              columns: {
+                readonly created_at: {
+                  readonly dataType: 'mysql/datetime';
+                  readonly codecId: 'mysql/datetime@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly kode_facility: {
+                  readonly dataType: 'mysql/varchar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly length: 191 };
+                  readonly many: false;
+                };
+                readonly nama_facility: {
+                  readonly dataType: 'mysql/varchar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly length: 191 };
+                  readonly many: false;
+                };
+                readonly updated_at: {
+                  readonly dataType: 'mysql/datetime';
+                  readonly codecId: 'mysql/datetime@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['kode_facility'] };
+              uniques: readonly [];
+              indexes: readonly [];
+              foreignKeys: readonly [];
+            };
+            readonly type_unit: {
+              columns: {
+                readonly branch_id: {
+                  readonly dataType: 'mysql/varchar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly length: 191 };
+                  readonly many: false;
+                };
+                readonly created_at: {
+                  readonly dataType: 'mysql/datetime';
+                  readonly codecId: 'mysql/datetime@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly id_unit_type: {
+                  readonly dataType: 'mysql/int';
+                  readonly codecId: 'mysql/int@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly nama_type_unit: {
+                  readonly dataType: 'mysql/varchar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly length: 191 };
+                  readonly many: false;
+                };
+                readonly updated_at: {
+                  readonly dataType: 'mysql/datetime';
+                  readonly codecId: 'mysql/datetime@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id_unit_type'] };
+              uniques: readonly [];
+              indexes: readonly [];
+              foreignKeys: readonly [];
+            };
+            readonly type_unit_facility: {
+              columns: {
+                readonly id_unit_type: {
+                  readonly dataType: 'mysql/int';
+                  readonly codecId: 'mysql/int@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly kode_facility: {
+                  readonly dataType: 'mysql/varchar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly length: 191 };
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id_unit_type', 'kode_facility'] };
+              uniques: readonly [];
+              indexes: readonly [];
+              foreignKeys: readonly [];
+            };
             readonly users: {
               columns: {
                 readonly created_at: {
@@ -199,12 +327,148 @@ type ContractBase = Omit<
   readonly target: 'mysql';
   readonly targetFamily: 'sql';
   readonly roots: {
+    readonly facility: {
+      readonly namespace: '__unbound__' & NamespaceId;
+      readonly model: 'facility';
+    };
+    readonly type_unit: {
+      readonly namespace: '__unbound__' & NamespaceId;
+      readonly model: 'type_unit';
+    };
+    readonly type_unit_facility: {
+      readonly namespace: '__unbound__' & NamespaceId;
+      readonly model: 'type_unit_facility';
+    };
     readonly users: { readonly namespace: '__unbound__' & NamespaceId; readonly model: 'users' };
   };
   readonly domain: {
     readonly namespaces: {
       readonly __unbound__: {
         readonly models: {
+          readonly facility: {
+            readonly fields: {
+              readonly created_at: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'mysql/datetime@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly kode_facility: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly typeParams: { readonly length: 191 };
+                };
+              };
+              readonly nama_facility: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly typeParams: { readonly length: 191 };
+                };
+              };
+              readonly updated_at: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'mysql/datetime@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+            };
+            readonly relations: Record<string, never>;
+            readonly storage: {
+              readonly table: 'facility';
+              readonly namespaceId: '__unbound__';
+              readonly fields: {
+                readonly created_at: { readonly column: 'created_at' };
+                readonly kode_facility: { readonly column: 'kode_facility' };
+                readonly nama_facility: { readonly column: 'nama_facility' };
+                readonly updated_at: { readonly column: 'updated_at' };
+              };
+            };
+          };
+          readonly type_unit: {
+            readonly fields: {
+              readonly branch_id: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly typeParams: { readonly length: 191 };
+                };
+              };
+              readonly created_at: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'mysql/datetime@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly id_unit_type: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mysql/int@1' };
+              };
+              readonly nama_type_unit: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly typeParams: { readonly length: 191 };
+                };
+              };
+              readonly updated_at: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'mysql/datetime@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+            };
+            readonly relations: Record<string, never>;
+            readonly storage: {
+              readonly table: 'type_unit';
+              readonly namespaceId: '__unbound__';
+              readonly fields: {
+                readonly branch_id: { readonly column: 'branch_id' };
+                readonly created_at: { readonly column: 'created_at' };
+                readonly id_unit_type: { readonly column: 'id_unit_type' };
+                readonly nama_type_unit: { readonly column: 'nama_type_unit' };
+                readonly updated_at: { readonly column: 'updated_at' };
+              };
+            };
+          };
+          readonly type_unit_facility: {
+            readonly fields: {
+              readonly id_unit_type: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'mysql/int@1' };
+              };
+              readonly kode_facility: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'sql/varchar@1';
+                  readonly typeParams: { readonly length: 191 };
+                };
+              };
+            };
+            readonly relations: Record<string, never>;
+            readonly storage: {
+              readonly table: 'type_unit_facility';
+              readonly namespaceId: '__unbound__';
+              readonly fields: {
+                readonly id_unit_type: { readonly column: 'id_unit_type' };
+                readonly kode_facility: { readonly column: 'kode_facility' };
+              };
+            };
+          };
           readonly users: {
             readonly fields: {
               readonly created_at: {
@@ -311,6 +575,40 @@ type ContractBase = Omit<
     readonly executionHash: ExecutionHash;
     readonly mutations: {
       readonly defaults: readonly [
+        {
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'facility';
+            readonly field: 'created_at';
+            readonly namespace: '__unbound__';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'facility';
+            readonly field: 'updated_at';
+            readonly namespace: '__unbound__';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'type_unit';
+            readonly field: 'created_at';
+            readonly namespace: '__unbound__';
+          };
+        },
+        {
+          readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly onUpdate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
+          readonly ref: {
+            readonly entry: 'type_unit';
+            readonly field: 'updated_at';
+            readonly namespace: '__unbound__';
+          };
+        },
         {
           readonly onCreate: { readonly id: 'timestampNow'; readonly kind: 'generator' };
           readonly ref: {

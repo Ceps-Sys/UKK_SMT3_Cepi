@@ -1,1 +1,35 @@
-contract: "./src/prisma/contract.prisma",
+// use prisma-8
+
+model users {
+  id         Int      @id @default(autoincrement())
+  kode_user  String?  @unique
+  fullname   String
+  email      String   @unique
+  password   String
+  role       String   @default("staff")
+  token      String?
+  created_at DateTime @default(now()) @onCreate(now())
+  updated_at temporal.UpdatedAt
+}
+
+model facility {
+  kode_facility String   @id
+  nama_facility String
+  created_at    DateTime @default(now()) @onCreate(now())
+  updated_at    temporal.UpdatedAt
+}
+
+model type_unit {
+  id_unit_type   Int      @id @default(autoincrement())
+  nama_type_unit String
+  branch_id      String
+  created_at     DateTime @default(now()) @onCreate(now())
+  updated_at     temporal.UpdatedAt
+}
+
+model type_unit_facility {
+  id_unit_type  Int
+  kode_facility String
+
+  @@id([id_unit_type, kode_facility])
+}
